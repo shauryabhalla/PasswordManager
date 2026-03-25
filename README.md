@@ -112,7 +112,7 @@ password-manager/
 3. First run: `python main.py` — prompts for a master password, creates `passwords.enc` and `salt.bin`.
 4. To add passwords: use the tray menu to decrypt/open the JSON, edit in VS Code, save, then reload from tray.
 5. Daily use: `pythonw.exe main.py` (no console window) or create a shortcut.         
-pythonw.exe `C:\Users\REDACTED\Downloads\Password Manager\main.py`
+For me personally this works - pythonw.exe `C:\Users\REDACTED\Downloads\Password Manager\main.py`
 
 ---
 
