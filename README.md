@@ -47,7 +47,7 @@
   - The app **auto-types the currently selected password** into whatever field/window has focus.
   - It types the **password only** (no username, no Tab key).
   - A **small popup notification** appears briefly in the **bottom-right corner** of the screen saying "Entering password..." (or similar), then auto-dismisses after ~1 second.
-- **Important:** Add a clear `# COMMENT` in the code around the popup logic so it can be easily commented out in the future if the user no longer wants the notification.
+- **Important:** Added a clear `# COMMENT` in the code around the popup logic so it can be easily commented out in the future if the user no longer wants the notification.
 
 ### 4. Copy to Clipboard
 - As an alternative to auto-type, the user can right-click the tray icon and choose **Copy Password** or **Copy Username** to copy the selected entry's credentials to the clipboard.
