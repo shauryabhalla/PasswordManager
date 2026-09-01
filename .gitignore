@@ -1,0 +1,18 @@
+# Real vault data — generated locally on first run, never commit actual contents.
+# Each user should end up with their own passwords.enc/salt.bin, not a shared one.
+passwords.enc
+salt.bin
+passwords_TEMP.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Editor/OS
+.vscode/
+.DS_Store
+Thumbs.db
