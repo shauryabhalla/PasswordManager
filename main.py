@@ -20,7 +20,7 @@ from pynput import mouse
 from PIL import Image, ImageDraw
 import pystray
 
-from crypto import load_passwords, decrypt_to_temp, encrypt_from_temp
+from crypto import load_passwords, decrypt_to_temp, encrypt_from_temp, change_master_password
 from autotype import type_string
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -116,6 +116,55 @@ def _on_edit_passwords(icon, item):
         _show_error(f"Edit failed: {e}")
 
 
+def _on_change_master_password(icon, item):
+    """Prompt for the current + a new master password, then re-encrypt the vault."""
+    global master_password, passwords
+
+    def _run():
+        global master_password, passwords
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+
+        old_pw = simpledialog.askstring(
+            "Change Master Password", "Enter current master password:",
+            show="*", parent=root,
+        )
+        if not old_pw:
+            root.destroy()
+            return
+
+        new_pw = simpledialog.askstring(
+            "Change Master Password", "Enter new master password:",
+            show="*", parent=root,
+        )
+        if not new_pw:
+            root.destroy()
+            return
+
+        confirm_pw = simpledialog.askstring(
+            "Change Master Password", "Confirm new master password:",
+            show="*", parent=root,
+        )
+        root.destroy()
+
+        if new_pw != confirm_pw:
+            _show_error("New passwords didn't match. Nothing was changed.")
+            return
+
+        try:
+            updated = change_master_password(old_pw, new_pw)
+        except ValueError as e:
+            _show_error(str(e))
+            return
+
+        master_password = new_pw
+        passwords = updated
+        _show_info("Master password changed.")
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
 def _on_quit(icon, item):
     global passwords, master_password
     # Clear sensitive data from memory
@@ -167,6 +216,7 @@ def _rebuild_menu():
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Reload Passwords", _on_reload),
         pystray.MenuItem("Edit Passwords (VS Code)", _on_edit_passwords),
+        pystray.MenuItem("Change Master Password", _on_change_master_password),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Quit", _on_quit),
     )
@@ -207,6 +257,16 @@ def _show_error(msg: str):
         root = tk.Tk()
         root.withdraw()
         messagebox.showerror("Password Manager", msg)
+        root.destroy()
+    threading.Thread(target=_run, daemon=True).start()
+
+
+def _show_info(msg: str):
+    """Show a quick info messagebox (in its own thread to avoid blocking)."""
+    def _run():
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showinfo("Password Manager", msg)
         root.destroy()
     threading.Thread(target=_run, daemon=True).start()
 

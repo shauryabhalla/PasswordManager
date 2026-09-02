@@ -1,126 +1,68 @@
-## Tech Stack
+# Password Manager
 
-- **Language:** Python 3.x
-- **OS:** Windows 10/11
-- **IDE:** VS Code
-- **Key Libraries:**
-  - `pynput` — global mouse button listener (side button: Button.x1 or Button.x2)
-  - `pystray` + `Pillow` — system tray icon and menu
-  - `cryptography` (Fernet) — encrypt/decrypt the password store file
-  - `tkinter` — small notification popup (bundled with Python, no extra install)
-  - `pyautogui` or `pynput.keyboard` — simulate keystrokes to type passwords
-  - `pyperclip` — copy-to-clipboard functionality
+A tiny system-tray password manager I built for my own Windows laptop because I got tired of typing the same 20-character passwords by hand every day. No browser extension, no cloud, no account — just a tray icon, a mouse side-button, and an encrypted file that lives on your machine.
 
----
+Click the side button on your mouse (the one that usually does "back" in a browser) and whatever password you've selected gets typed straight into the focused field.
 
-## Core Features
+## How it works
 
-### 1. Encrypted Password Store
-- Passwords are stored in a single JSON file (`passwords.json`), encrypted at rest using Fernet symmetric encryption.
-- On launch, the user enters a **master password** once. This derives the encryption key (use PBKDF2 or similar KDF with a random salt stored alongside the file).
-- The decrypted password data is held **only in memory** while the app runs.
-- The JSON structure is a **flat list**, each entry containing:
-  ```json
-  {
-    "name": "GitHub",
-    "username": "myuser@email.com",
-    "password": "s3cretP@ss"
-  }
-  ```
-- Users **add/edit/delete** passwords by editing the JSON file directly in VS Code. The app should provide a tray menu option to:
-  - **Reload passwords** — re-reads and re-decrypts the file without restarting the app.
-  - **Open passwords file** — opens the decrypted JSON in VS Code for editing, then re-encrypts on save/close. *(Or: provide a CLI/tray option to decrypt → edit → re-encrypt.)*
+1. Run it, type your master password once.
+2. Right-click the tray icon → **Select Password** → pick an entry.
+3. Click into a login field somewhere.
+4. Press the mouse side button. Password gets typed in, no clipboard involved.
 
-### 2. System Tray App
-- On launch (after master password entry), the app minimizes to the **Windows system tray** (notification area near the clock).
-- **No console window** should be visible (run via `pythonw.exe`).
-- Right-click tray menu options:
-  - **Select Password** — shows the list of saved entry names; clicking one sets it as the "active" password ready to type.
-  - **Reload Passwords** — re-reads the encrypted file.
-  - **Copy Password** — copies the currently selected password to clipboard.
-  - **Copy Username** — copies the currently selected username to clipboard.
-  - **Quit** — exits the app cleanly.
+There's a little "Entering password..." popup that flashes in the bottom-right corner so you know it actually fired — mostly there because I kept mashing the side button and not knowing if it registered.
 
-### 3. Mouse Side-Button Trigger
-- The app listens globally for **mouse side button click** (Button.x1 or Button.x2 — typically the "back" thumb button).
-- When triggered:
-  - The app **auto-types the currently selected password** into whatever field/window has focus.
-  - It types the **password only** (no username, no Tab key).
-  - A **small popup notification** appears briefly in the **bottom-right corner** of the screen saying "Entering password..." (or similar), then auto-dismisses after ~1 second.
-- **Important:** Added a clear `# COMMENT` in the code around the popup logic so it can be easily commented out in the future if the user no longer wants the notification.
+Tray menu also has:
+- **Copy Password** / **Copy Username** — if you'd rather paste than auto-type
+- **Reload Passwords** — re-reads the encrypted file without restarting
+- **Edit Passwords (VS Code)** — decrypts to a temp JSON, opens it in VS Code, re-encrypts when you close the editor
+- **Change Master Password** — asks for your current password, then a new one twice, and re-encrypts everything under it
+- **Quit**
 
-### 4. Copy to Clipboard
-- As an alternative to auto-type, the user can right-click the tray icon and choose **Copy Password** or **Copy Username** to copy the selected entry's credentials to the clipboard.
-- Use `pyperclip` for clipboard operations.
+## Adding / editing passwords
 
----
+There's no fancy UI for adding entries — you edit a JSON file. Use the tray menu's edit option, it'll open the decrypted list in VS Code (falls back to Notepad if VS Code isn't on PATH). Each entry looks like:
 
-## Password Selection Flow
-
-Since the UI is minimal (no searchable popup window), the flow is:
-
-1. **Right-click tray icon → Select Password → pick an entry name** from the submenu.
-2. That entry becomes the **"active" password**.
-3. Navigate to the login page, click on the password field.
-4. **Press mouse side button** → password is auto-typed.
-
-The tray icon tooltip or menu should show which entry is currently selected (e.g., `✓ GitHub`).
-
----
-
-## What This App Does NOT Do
-
-- No auto-start with Windows (user launches manually).
-- No auto-URL matching or browser integration.
-- No password generator.
-- No auto-lock / idle timeout.
-- No multi-user support.
-- No cloud sync.
-
----
-
-## Security Requirements
-
-- Master password is **never stored** anywhere — it is entered at runtime and used to derive the key.
-- Use **PBKDF2** (or Argon2 if available) with a random salt for key derivation. Store the salt in a separate small file or as a header in the encrypted file.
-- Decrypted passwords exist **only in memory**.
-- Auto-type simulates keystrokes (does not use clipboard), reducing clipboard exposure.
-- When the app quits, all in-memory password data should be cleared.
-
----
-
-## File/Folder Structure (Suggested)
-
-```
-password-manager/
-├── main.py              # Entry point — master password prompt, tray app, mouse listener
-├── crypto.py            # Encryption/decryption helpers (Fernet + PBKDF2)
-├── autotype.py          # Keystroke simulation logic
-├── popup.py             # Bottom-right notification popup (tkinter)  ← commentable
-├── passwords.enc        # Encrypted password store (generated on first run)
-├── salt.bin             # Random salt for key derivation (generated on first run)
-├── requirements.txt     # pip dependencies
-└── README.md            # Setup & usage instructions
+```json
+{
+  "name": "GitHub",
+  "username": "myuser@email.com",
+  "password": "s3cretP@ss"
+}
 ```
 
----
+Save and close the editor and it re-encrypts automatically.
 
-## Setup & Run Instructions (Include in README)
+## Setup
 
-1. Install Python 3.x from python.org (check "Add to PATH").
-2. `pip install pynput pystray Pillow cryptography pyautogui pyperclip`
-3. First run: `python main.py` — prompts for a master password, creates `passwords.enc` and `salt.bin`.
-4. To add passwords: use the tray menu to decrypt/open the JSON, edit in VS Code, save, then reload from tray.
-5. Daily use: `pythonw.exe main.py` (no console window) or create a shortcut.
-   Example: `pythonw.exe "C:\Users\<you>\Downloads\Password Manager\main.py"`
+1. Python 3.10+ (need the `int | None` type hints)
+2. `pip install -r requirements.txt`
+3. `python main.py` the first time — it'll ask you to set a master password and generate `passwords.enc` + `salt.bin` next to the code
+4. After that, run it with `pythonw.exe main.py` so you don't get a console window sitting there. I just made a shortcut for this:
+   ```
+   pythonw.exe "C:\Users\<you>\Downloads\Password Manager\main.py"
+   ```
 
----
+## Under the hood
 
-## Nice-to-Have / Future Enhancements (Out of Scope for Now)
+- Vault is a single JSON blob, encrypted with Fernet (`cryptography` lib)
+- Key comes from your master password run through PBKDF2-SHA256, 600k iterations, random salt
+- Nothing decrypted ever touches disk except briefly during the VS Code edit flow — and that temp file gets deleted right after
+- Master password only lives in memory while the app is running, gone on quit
+- Auto-type is real keystrokes (`pynput`), not clipboard, so nothing sensitive sits in your clipboard history
 
-- Searchable popup window on side-button click.
-- Auto-match passwords to active window/URL.
-- Password strength checker / generator.
-- Auto-lock after idle.
-- Auto-start with Windows (Task Scheduler or Startup folder).
-- Backup/export of password store.
+Mouse buttons: it's listening for `Button.x1`/`Button.x2` (the side thumb buttons). If your mouse maps those differently, that's the line to change in `main.py`.
+
+Changing the master password (via the tray menu) also generates a brand new salt, not just a new key — so it's a real rotation, not just re-locking the same door.
+
+## What it's not
+
+Didn't want to build a full password manager, so on purpose this doesn't have:
+- Auto-start on boot
+- Browser/URL matching
+- A password generator
+- Idle auto-lock
+- Any kind of sync 
+
+Might add auto-lock at some point if I keep forgetting to quit it. For now this covers what I actually needed.

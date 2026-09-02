@@ -98,6 +98,24 @@ def save_passwords(master_password: str, passwords: list[dict]) -> None:
         f.write(encrypted)
 
 
+def change_master_password(old_password: str, new_password: str) -> list[dict]:
+    """
+    Verify old_password against the existing vault, then re-encrypt
+    everything under new_password using a freshly generated salt.
+
+    Raises ValueError if old_password is wrong.
+    """
+    passwords = load_passwords(old_password)
+
+    # Fresh salt so the new key isn't derived alongside the old one.
+    salt = os.urandom(SALT_LENGTH)
+    with open(_salt_path(), "wb") as f:
+        f.write(salt)
+
+    save_passwords(new_password, passwords)
+    return passwords
+
+
 def decrypt_to_temp(master_password: str) -> str:
     """
     Decrypt passwords.enc to a temporary JSON file for editing.
