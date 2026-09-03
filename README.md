@@ -1,6 +1,6 @@
 # Password Manager
 
-A tiny system-tray password manager I built for my own Windows laptop because I got tired of typing the same 20-character passwords by hand every day. No browser extension, no cloud, no account — just a tray icon, a mouse side-button, and an encrypted file that lives on your machine.
+A tiny system-tray password manager I built for my own Windows laptop because I got tired of typing the same 20character passwords by hand every day. No browser extension, no cloud, no account just a tray icon, a mouse side-button, and an encrypted file that lives on your machine.
 
 Click the side button on your mouse (the one that usually does "back" in a browser) and whatever password you've selected gets typed straight into the focused field.
 
